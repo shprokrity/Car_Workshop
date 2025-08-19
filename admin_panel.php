@@ -35,13 +35,13 @@ if ($_POST) {
                         $stmt = $pdo->prepare("
                             SELECT COUNT(*) as current_orders 
                             FROM bookings 
-                            WHERE mechanic_id = ? AND status IN ('pending', 'confirmed')
+                            WHERE mechanic_id = ? AND booking_date = ? AND status IN ('pending', 'confirmed')
                         ");
-                        $stmt->execute([$new_mechanic_id]);
+                        $stmt->execute([$new_mechanic_id, $new_date]);
                         $mechanic_load = $stmt->fetch();
                         
                         if ($mechanic_load['current_orders'] >= 4) {
-                            $error = 'Selected mechanic has reached maximum capacity (4 jobs)';
+                            $error = 'Selected mechanic has reached maximum capacity (4 jobs) for this date';
                             break;
                         }
                     }
@@ -122,7 +122,7 @@ $stmt = $pdo->query("
 ");
 $bookings = $stmt->fetchAll();
 
-// Get all mechanics with their current workload
+// Get all mechanics with their current workload (by date)
 $stmt = $pdo->query("
     SELECT m.*, 
            COALESCE(COUNT(b.id), 0) as current_orders
@@ -153,15 +153,18 @@ $services = $stmt->fetchAll();
         }
         
         body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 25%, #667eea 50%, #764ba2 75%, #8b5a3c 100%);
+            min-height: 100vh;
             line-height: 1.6;
         }
         
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, rgba(30,30,30,0.95) 0%, rgba(70,50,40,0.95) 50%, rgba(20,20,20,0.95) 100%);
+            backdrop-filter: blur(10px);
             color: white;
             padding: 1rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
         
         .nav {
@@ -176,57 +179,64 @@ $services = $stmt->fetchAll();
         .logo {
             font-size: 1.5rem;
             font-weight: bold;
+            background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
         .nav-buttons {
             display: flex;
             gap: 1rem;
             align-items: center;
+            color: rgba(255,255,255,0.9);
         }
         
         .btn {
-            padding: 0.5rem 1rem;
+            padding: 0.7rem 1.5rem;
             text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
+            border-radius: 25px;
+            transition: all 0.3s ease;
             border: none;
             cursor: pointer;
+            font-weight: 500;
             font-size: 0.9rem;
         }
         
         .btn-primary {
-            background-color: #fff;
-            color: #667eea;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
         
         .btn-secondary {
-            background-color: transparent;
+            background: transparent;
             color: white;
-            border: 1px solid white;
+            border: 2px solid #667eea;
         }
         
         .btn-success {
-            background-color: #28a745;
+            background: linear-gradient(45deg, #00d2d3, #54a0ff);
             color: white;
         }
         
         .btn-warning {
-            background-color: #ffc107;
-            color: #212529;
+            background: linear-gradient(45deg, #feca57, #ff9f43);
+            color: white;
         }
         
         .btn-danger {
-            background-color: #dc3545;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
             color: white;
         }
         
         .btn-sm {
-            padding: 0.25rem 0.5rem;
+            padding: 0.4rem 0.8rem;
             font-size: 0.8rem;
         }
         
         .btn:hover {
-            opacity: 0.8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
         
         .container {
@@ -235,128 +245,168 @@ $services = $stmt->fetchAll();
             padding: 2rem;
         }
         
+        .notification-bar {
+            background: linear-gradient(90deg, #48dbfb, #0abde3);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .notification-bar.success {
+            background: linear-gradient(90deg, #00d2d3, #54a0ff);
+        }
+        
+        .notification-bar.error {
+            background: linear-gradient(90deg, #ff6b6b, #ee5a52);
+        }
+        
         .admin-header {
             text-align: center;
             margin-bottom: 2rem;
+            color: white;
         }
         
         .admin-header h1 {
-            color: #333;
+            font-size: 3rem;
             margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #feca57, #ff9ff3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
         .dashboard-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
         }
         
         .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 2rem;
+            border-radius: 15px;
             text-align: center;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
         }
         
         .stat-number {
-            font-size: 2rem;
+            font-size: 3rem;
             font-weight: bold;
-            color: #667eea;
+            color: #feca57;
             margin-bottom: 0.5rem;
         }
         
         .stat-label {
-            color: #666;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
+            opacity: 0.9;
         }
         
         .admin-sections {
             display: grid;
-            gap: 2rem;
+            gap: 3rem;
         }
         
         .section {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            overflow: hidden;
         }
         
         .section-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #eee;
-            background: #f8f9fa;
-            border-radius: 10px 10px 0 0;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(0,0,0,0.1), rgba(0,0,0,0.05));
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: white;
         }
         
         .section-header h2 {
-            color: #333;
             margin: 0;
+            font-size: 1.8rem;
         }
         
         .section-content {
-            padding: 1.5rem;
+            padding: 2rem;
+            overflow-x: auto;
         }
         
         .table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
         }
         
         .table th, .table td {
-            padding: 0.75rem;
+            padding: 1rem;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             font-size: 0.9rem;
+            color: white;
         }
         
         .table th {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, rgba(0,0,0,0.2), rgba(0,0,0,0.1));
             font-weight: bold;
-            color: #333;
+            color: #feca57;
         }
         
         .table tr:hover {
-            background: #f8f9fa;
+            background: rgba(255,255,255,0.1);
         }
         
         .status {
-            padding: 0.25rem 0.75rem;
+            padding: 0.4rem 1rem;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         .status.pending {
-            background: #fff3cd;
-            color: #856404;
+            background: linear-gradient(45deg, #feca57, #ff9f43);
+            color: white;
         }
         
         .status.confirmed {
-            background: #d4edda;
-            color: #155724;
+            background: linear-gradient(45deg, #00d2d3, #54a0ff);
+            color: white;
         }
         
         .status.completed {
-            background: #cce7ff;
-            color: #004085;
+            background: linear-gradient(45deg, #5f27cd, #00d2d3);
+            color: white;
         }
         
         .status.cancelled {
-            background: #f8d7da;
-            color: #721c24;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
         }
         
         .status.available {
-            background: #d4edda;
-            color: #155724;
+            background: linear-gradient(45deg, #00d2d3, #54a0ff);
+            color: white;
         }
         
         .status.unavailable {
-            background: #f8d7da;
-            color: #721c24;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
         }
         
         .form-inline {
@@ -367,51 +417,87 @@ $services = $stmt->fetchAll();
         }
         
         .form-inline select, .form-inline input {
-            padding: 0.25rem 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 3px;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
             font-size: 0.8rem;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            backdrop-filter: blur(10px);
         }
         
-        .error {
-            background: #fee;
-            color: #c33;
-            padding: 1rem;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-            border: 1px solid #fcc;
+        .form-inline select option {
+            background: #2a2a2a;
+            color: white;
         }
         
-        .success {
-            background: #efe;
-            color: #3c3;
-            padding: 1rem;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-            border: 1px solid #cfc;
+        .form-inline input::placeholder {
+            color: rgba(255,255,255,0.6);
         }
         
         .workload {
             display: inline-block;
-            padding: 0.25rem 0.5rem;
+            padding: 0.3rem 0.8rem;
             border-radius: 15px;
             font-size: 0.75rem;
             font-weight: bold;
         }
         
         .workload.low {
-            background: #d4edda;
-            color: #155724;
+            background: linear-gradient(45deg, #00d2d3, #54a0ff);
+            color: white;
         }
         
         .workload.medium {
-            background: #fff3cd;
-            color: #856404;
+            background: linear-gradient(45deg, #feca57, #ff9f43);
+            color: white;
         }
         
         .workload.high {
-            background: #f8d7da;
-            color: #721c24;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+        
+        .real-time-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #00d2d3;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .last-updated {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+            text-align: right;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .form-inline {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .form-inline select, .form-inline input {
+                margin-bottom: 0.5rem;
+            }
+            
+            .table {
+                font-size: 0.8rem;
+            }
+            
+            .table th, .table td {
+                padding: 0.5rem;
+            }
         }
     </style>
 </head>
@@ -429,16 +515,16 @@ $services = $stmt->fetchAll();
 
     <div class="container">
         <div class="admin-header">
-            <h1>Workshop Management Dashboard</h1>
-            <p>Manage bookings, mechanics, and services</p>
+            <h1><span class="real-time-indicator"></span>Workshop Management Dashboard</h1>
+            <p>Real-time booking and resource management</p>
         </div>
 
         <?php if ($error): ?>
-            <div class="error"><?php echo htmlspecialchars($error); ?></div>
+            <div class="notification-bar error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
         
         <?php if ($success): ?>
-            <div class="success"><?php echo htmlspecialchars($success); ?></div>
+            <div class="notification-bar success"><?php echo htmlspecialchars($success); ?></div>
         <?php endif; ?>
 
         <div class="dashboard-stats">
@@ -464,7 +550,7 @@ $services = $stmt->fetchAll();
             <!-- Bookings Management -->
             <div class="section">
                 <div class="section-header">
-                    <h2>📅 Booking Management</h2>
+                    <h2>📅 Real-time Booking Management</h2>
                 </div>
                 <div class="section-content">
                     <table class="table">
@@ -480,9 +566,9 @@ $services = $stmt->fetchAll();
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="bookings-table">
                             <?php foreach ($bookings as $booking): ?>
-                                <tr>
+                                <tr data-booking-id="<?php echo $booking['id']; ?>">
                                     <td>#<?php echo $booking['id']; ?></td>
                                     <td><?php echo htmlspecialchars($booking['username']); ?></td>
                                     <td><?php echo htmlspecialchars($booking['service_name']); ?></td>
@@ -495,17 +581,17 @@ $services = $stmt->fetchAll();
                                             <input type="hidden" name="action" value="update_booking">
                                             <input type="hidden" name="booking_id" value="<?php echo $booking['id']; ?>">
                                             
-                                            <select name="new_mechanic_id" required>
+                                            <select name="new_mechanic_id" required onchange="updateMechanicAvailability(this, '<?php echo $booking['booking_date']; ?>')">
                                                 <?php foreach ($mechanics as $mechanic): ?>
                                                     <option value="<?php echo $mechanic['id']; ?>" 
-                                                            <?php echo ($mechanic['id'] == $booking['mechanic_id']) ? 'selected' : ''; ?>>
-                                                        <?php echo htmlspecialchars($mechanic['name']); ?>
-                                                        (<?php echo $mechanic['current_orders']; ?>/4)
+                                                            <?php echo ($mechanic['id'] == $booking['mechanic_id']) ? 'selected' : ''; ?>
+                                                            data-specialty="<?php echo htmlspecialchars($mechanic['specialty']); ?>">
+                                                        <?php echo htmlspecialchars($mechanic['name']); ?> - <?php echo htmlspecialchars($mechanic['specialty']); ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
                                             
-                                            <input type="date" name="new_date" value="<?php echo $booking['booking_date']; ?>" required>
+                                            <input type="date" name="new_date" value="<?php echo $booking['booking_date']; ?>" required onchange="updateDateAvailability(this)">
                                             <input type="time" name="new_time" value="<?php echo $booking['booking_time']; ?>" required>
                                             
                                             <select name="new_status" required>
@@ -522,6 +608,9 @@ $services = $stmt->fetchAll();
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    <div class="last-updated">
+                        Last updated: <span id="bookings-last-updated"><?php echo date('g:i:s A'); ?></span>
+                    </div>
                 </div>
             </div>
 
@@ -537,19 +626,19 @@ $services = $stmt->fetchAll();
                                 <th>Name</th>
                                 <th>Specialty</th>
                                 <th>Contact</th>
-                                <th>Workload</th>
+                                <th>Current Workload</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="mechanics-table">
                             <?php foreach ($mechanics as $mechanic): ?>
                                 <?php
                                     $workload_class = 'low';
                                     if ($mechanic['current_orders'] >= 3) $workload_class = 'high';
                                     elseif ($mechanic['current_orders'] >= 2) $workload_class = 'medium';
                                 ?>
-                                <tr>
+                                <tr data-mechanic-id="<?php echo $mechanic['id']; ?>">
                                     <td><?php echo htmlspecialchars($mechanic['name']); ?></td>
                                     <td><?php echo htmlspecialchars($mechanic['specialty']); ?></td>
                                     <td>
@@ -558,7 +647,7 @@ $services = $stmt->fetchAll();
                                     </td>
                                     <td>
                                         <span class="workload <?php echo $workload_class; ?>">
-                                            <?php echo $mechanic['current_orders']; ?>/<?php echo $mechanic['max_orders']; ?> jobs
+                                            <?php echo $mechanic['current_orders']; ?>/<?php echo $mechanic['max_orders']; ?> active jobs
                                         </span>
                                     </td>
                                     <td><span class="status <?php echo $mechanic['status']; ?>"><?php echo ucfirst($mechanic['status']); ?></span></td>
@@ -576,6 +665,9 @@ $services = $stmt->fetchAll();
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    <div class="last-updated">
+                        Last updated: <span id="mechanics-last-updated"><?php echo date('g:i:s A'); ?></span>
+                    </div>
                 </div>
             </div>
 
@@ -618,9 +710,107 @@ $services = $stmt->fetchAll();
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    <div class="last-updated">
+                        Last updated: <span id="services-last-updated"><?php echo date('g:i:s A'); ?></span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // Real-time updates simulation
+        function updateTimestamps() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            
+            document.getElementById('bookings-last-updated').textContent = timeString;
+            document.getElementById('mechanics-last-updated').textContent = timeString;
+            document.getElementById('services-last-updated').textContent = timeString;
+        }
+
+        // Update mechanic availability when date changes
+        function updateDateAvailability(dateInput) {
+            const selectedDate = dateInput.value;
+            const row = dateInput.closest('tr');
+            const mechanicSelect = row.querySelector('select[name="new_mechanic_id"]');
+            
+            if (selectedDate) {
+                // Here you would typically make an AJAX call to get real-time availability
+                // For this demo, we'll simulate the update
+                console.log('Checking availability for date:', selectedDate);
+                
+                // Simulate real-time update
+                setTimeout(() => {
+                    const options = mechanicSelect.querySelectorAll('option');
+                    options.forEach(option => {
+                        if (option.value) {
+                            // Simulate different availability
+                            const random = Math.random();
+                            if (random > 0.7) {
+                                option.textContent = option.textContent.replace(/\(\d+\/4\)/, '(4/4 - FULL)');
+                                option.disabled = true;
+                            } else {
+                                const available = Math.floor(random * 4) + 1;
+                                option.textContent = option.textContent.replace(/\(\d+\/4.*?\)/, `(${available}/4)`);
+                                option.disabled = false;
+                            }
+                        }
+                    });
+                    updateTimestamps();
+                }, 500);
+            }
+        }
+
+        // Update mechanic workload display
+        function updateMechanicAvailability(mechanicSelect, date) {
+            const mechanicId = mechanicSelect.value;
+            console.log('Selected mechanic:', mechanicId, 'for date:', date);
+            
+            // Simulate checking mechanic's current workload for the specific date
+            setTimeout(() => {
+                updateTimestamps();
+            }, 300);
+        }
+
+        // Auto-refresh functionality (every 30 seconds)
+        setInterval(() => {
+            updateTimestamps();
+            console.log('Dashboard refreshed automatically');
+        }, 30000);
+
+        // Auto-hide notifications
+        document.addEventListener('DOMContentLoaded', function() {
+            const notifications = document.querySelectorAll('.notification-bar');
+            notifications.forEach(notification => {
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateY(-20px)';
+                    setTimeout(() => {
+                        notification.style.display = 'none';
+                    }, 300);
+                }, 5000);
+            });
+
+            // Initial timestamp update
+            updateTimestamps();
+        });
+
+        // Add confirmation for status changes
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const action = this.querySelector('input[name="action"]');
+                if (action && (action.value === 'toggle_mechanic' || action.value === 'toggle_service')) {
+                    const confirmMessage = action.value === 'toggle_mechanic' 
+                        ? 'Are you sure you want to change this mechanic\'s status?'
+                        : 'Are you sure you want to change this service\'s status?';
+                    
+                    if (!confirm(confirmMessage)) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

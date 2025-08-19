@@ -56,14 +56,16 @@ CREATE TABLE bookings (
 
 -- Insert sample admin user (password: admin123)
 INSERT INTO users (username, email, password, role) VALUES 
-('admin', 'admin@workshop.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+('admin', 'admin@workshop.com', 'admin123', 'admin');
 
 -- Insert sample mechanics
 INSERT INTO mechanics (name, specialty, email, phone) VALUES 
-('John Smith', 'Engine Specialist', 'john@workshop.com', '123-456-7890'),
-('Mike Johnson', 'Brake Expert', 'mike@workshop.com', '123-456-7891'),
-('David Brown', 'Transmission Specialist', 'david@workshop.com', '123-456-7892'),
-('Chris Wilson', 'Electrical Systems', 'chris@workshop.com', '123-456-7893');
+('Tawkir Arifin', 'Engine Specialist', 'tawkirarifin@gmail.com', '01911111111'),
+('Nafis Rayan', 'Brake Expert', 'nafis@gmail.com', '01911111111'),
+('Tashin Rahman', 'Transmission Specialist', 'tashin@gmail.com', '01911111111'),
+('Tawsif Islam', 'Electrical Systems', 'tawsif@gmail.com', '01911111111');
+('Saiyara Iffat', 'Electrical Systems', 'saiyaraiffat@gmail.com', '01911111111');
+('Amily Khan', 'Electrical Systems', 'amilykhan@gmail.com', '01911111111');
 
 -- Insert sample repair services
 INSERT INTO repair_services (service_name, description, price, duration_hours) VALUES 
