@@ -7,12 +7,12 @@ $services = $stmt->fetchAll();
 
 // Service icons mapping
 $service_icons = [
-    'Oil Change' => 'https://img.icons8.com/color/96/oil.png',
-    'Brake Repair' => 'https://img.icons8.com/color/96/brake-discs.png',
-    'Engine Diagnostic' => 'https://img.icons8.com/color/96/engine.png',
-    'Transmission Service' => 'https://img.icons8.com/color/96/transmission.png',
-    'Battery Replacement' => 'https://img.icons8.com/color/96/car-battery.png',
-    'Tire Rotation' => 'https://img.icons8.com/color/96/tire.png'
+    'Oil Change' => 'oil change.jpg',
+    'Brake Repair' => 'brake-discs.png',
+    'Engine Diagnostic' => 'engine.png',
+    'Transmission Service' => 'transmission service.webp',
+    'Battery Replacement' => 'car-battery.png',
+    'Tire Rotation' => 'tire.png'
 ];
 ?>
 
@@ -451,13 +451,13 @@ $service_icons = [
                         <?php if (isset($service_icons[$service['service_name']])): ?>
                             <img src="<?php echo $service_icons[$service['service_name']]; ?>" alt="<?php echo htmlspecialchars($service['service_name']); ?>">
                         <?php else: ?>
-                            <img src="https://img.icons8.com/color/96/maintenance.png" alt="<?php echo htmlspecialchars($service['service_name']); ?>">
+                            <img src="maintenance.png" alt="<?php echo htmlspecialchars($service['service_name']); ?>">
                         <?php endif; ?>
                     </div>
                     <h3><?php echo htmlspecialchars($service['service_name']); ?></h3>
                     <p><?php echo htmlspecialchars($service['description']); ?></p>
                     <div class="price-duration">
-                        <div class="price">$<?php echo number_format($service['price'], 2); ?></div>
+                        <div class="price">BDT<?php echo number_format($service['price'], 2); ?></div>
                         <div class="duration"><?php echo $service['duration_hours']; ?> hour(s)</div>
                     </div>
                 </div>

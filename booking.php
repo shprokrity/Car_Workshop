@@ -5,22 +5,22 @@ requireLogin();
 $error = '';
 $success = '';
 
-// Get all mechanics
+// get mechanics
 $stmt = $pdo->query("SELECT * FROM mechanics WHERE status = 'available' ORDER BY name ASC");
 $all_mechanics = $stmt->fetchAll();
 
-// Get available repair services
+// available repair services
 $stmt = $pdo->query("SELECT * FROM repair_services WHERE status = 'available' ORDER BY service_name");
 $services = $stmt->fetchAll();
 
-// Service icons mapping
+// service icons mapping
 $service_icons = [
-    'Oil Change' => 'https://img.icons8.com/color/96/oil.png',
-    'Brake Repair' => 'https://img.icons8.com/color/96/brake-discs.png',
-    'Engine Diagnostic' => 'https://img.icons8.com/color/96/engine.png',
-    'Transmission Service' => 'https://img.icons8.com/color/96/transmission.png',
-    'Battery Replacement' => 'https://img.icons8.com/color/96/car-battery.png',
-    'Tire Rotation' => 'https://img.icons8.com/color/96/tire.png'
+    'Oil Change' => 'oil change.jpg',
+    'Brake Repair' => 'brake-discs.png',
+    'Engine Diagnostic' => 'engine.png',
+    'Transmission Service' => 'transmission service.webp',
+    'Battery Replacement' => 'car-battery.png',
+    'Tire Rotation' => 'tire.png'
 ];
 
 if ($_POST) {
@@ -29,8 +29,13 @@ if ($_POST) {
     $booking_date = $_POST['booking_date'];
     $booking_time = $_POST['booking_time'];
     $notes = trim($_POST['notes']);
-    
-    if (empty($mechanic_id) || empty($selected_services) || empty($booking_date) || empty($booking_time)) {
+    $name = trim($_POST['name']);
+    $address = trim($_POST['address']);
+    $phone = trim($_POST['phone']);
+    $car_license = trim($_POST['car_license']);
+    $car_engine = trim($_POST['car_engine']);
+
+    if (empty($name) || empty($address) || empty($phone) || empty($car_license) || empty($car_engine) || empty($selected_services) || empty($booking_date) || empty($booking_time)) {
         $error = 'Please fill in all required fields and select at least one service';
     } elseif (strtotime($booking_date) < strtotime('today')) {
         $error = 'Booking date cannot be in the past';
@@ -86,20 +91,23 @@ if ($_POST) {
                     $stmt->execute([$mechanic_id]);
                     $mechanic = $stmt->fetch();
                     
-                    // Create main booking record
+                    // Create booking record
                     $stmt = $pdo->prepare("
-                        INSERT INTO bookings (user_id, mechanic_id, service_id, booking_date, booking_time, total_price, notes, status) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+                        INSERT INTO bookings (user_id, name, address, phone, car_license, car_engine, mechanic_id, service_id, booking_date, booking_time, total_price, notes, status) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
                     ");
-                    
-                    // Use first service ID as primary service (we'll store multiple services in notes)
+
+                    // Use primary service (first selected service)
                     $primary_service_id = $selected_services[0];
                     $detailed_notes = "Services: " . implode(', ', $service_names);
                     if (!empty($notes)) {
                         $detailed_notes .= " | Customer Notes: " . $notes;
                     }
-                    
-                    if ($stmt->execute([$_SESSION['user_id'], $mechanic_id, $primary_service_id, $booking_date, $booking_time, $total_price, $detailed_notes])) {
+
+                    if ($stmt->execute([
+                        $_SESSION['user_id'], $name, $address, $phone, $car_license, $car_engine,
+                        $mechanic_id, $primary_service_id, $booking_date, $booking_time, $total_price, $detailed_notes
+                    ])) {
                         $booking_id = $pdo->lastInsertId();
                         
                         // Send confirmation email
@@ -116,7 +124,7 @@ if ($_POST) {
                                 <li><strong>Date:</strong> " . date('M j, Y', strtotime($booking_date)) . "</li>
                                 <li><strong>Time:</strong> " . date('g:i A', strtotime($booking_time)) . "</li>
                                 <li><strong>Total Duration:</strong> {$total_duration} hour(s)</li>
-                                <li><strong>Total Price:</strong> $" . number_format($total_price, 2) . "</li>
+                                <li><strong>Total Price:</strong> BDT" . number_format($total_price, 2) . "</li>
                             </ul>
                             <p>We will contact you if any changes are needed.</p>
                             <p>Thank you for choosing our workshop!</p>
@@ -124,7 +132,7 @@ if ($_POST) {
                         
                         sendEmail($user_email, $subject, $message);
                         
-                        $success = 'Booking created successfully! Total: $' . number_format($total_price, 2) . ' for ' . count($selected_services) . ' service(s). A confirmation email has been sent.';
+                        $success = 'Booking created successfully! Total: BDT' . number_format($total_price, 2) . ' for ' . count($selected_services) . ' service(s). A confirmation email has been sent.';
                     } else {
                         $error = 'Failed to create booking. Please try again.';
                     }
@@ -269,7 +277,7 @@ if ($_POST) {
             font-size: 1.1rem;
         }
         
-        select, input[type="date"], input[type="time"], textarea {
+        select, input[type="date"], input[type="time"], textarea, input[type="text"] {
             width: 100%;
             padding: 1rem;
             border: 1px solid rgba(255,255,255,0.3);
@@ -569,6 +577,31 @@ if ($_POST) {
             
             <form method="POST" id="bookingForm">
                 <div class="form-group">
+                    <label for="name">Full Name:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Address:</label>
+                    <input type="text" id="address" name="address" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone:</label>
+                    <input type="text" id="phone" name="phone" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="car_license">Car License Number:</label>
+                    <input type="text" id="car_license" name="car_license" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="car_engine">Car Engine Number:</label>
+                    <input type="text" id="car_engine" name="car_engine" required>
+                </div>
+
+                <div class="form-group">
                     <label>Select Services:</label>
                     <div class="services-grid">
                         <?php foreach ($services as $service): ?>
@@ -582,7 +615,7 @@ if ($_POST) {
                                         <?php if (isset($service_icons[$service['service_name']])): ?>
                                             <img src="<?php echo $service_icons[$service['service_name']]; ?>" alt="<?php echo htmlspecialchars($service['service_name']); ?>">
                                         <?php else: ?>
-                                            <img src="https://img.icons8.com/color/96/maintenance.png" alt="<?php echo htmlspecialchars($service['service_name']); ?>">
+                                            <img src="maintenance.png" alt="<?php echo htmlspecialchars($service['service_name']); ?>">
                                         <?php endif; ?>
                                     </div>
                                     <div class="service-info">
@@ -591,7 +624,7 @@ if ($_POST) {
                                 </div>
                                 <div class="service-desc"><?php echo htmlspecialchars($service['description']); ?></div>
                                 <div class="service-details">
-                                    <span class="service-price">$<?php echo number_format($service['price'], 2); ?></span>
+                                    <span class="service-price">BDT<?php echo number_format($service['price'], 2); ?></span>
                                     <span class="service-duration"><?php echo $service['duration_hours']; ?> hour(s)</span>
                                 </div>
                             </div>
@@ -604,7 +637,7 @@ if ($_POST) {
                     <div id="selected-services"></div>
                     <div class="cost-total">
                         <span>Total Cost:</span>
-                        <span id="total-cost">$0.00</span>
+                        <span id="total-cost">BDT0.00</span>
                     </div>
                     <div class="cost-total">
                         <span>Total Duration:</span>
@@ -700,12 +733,12 @@ if ($_POST) {
                 serviceItem.className = 'cost-item';
                 serviceItem.innerHTML = `
                     <span>${name} (${duration}h)</span>
-                    <span>${price.toFixed(2)}</span>
+                    <span>BDT${price.toFixed(2)}</span>
                 `;
                 selectedServicesDiv.appendChild(serviceItem);
             });
             
-            document.getElementById('total-cost').textContent = `${totalCost.toFixed(2)}`;
+            document.getElementById('total-cost').textContent = `BDT${totalCost.toFixed(2)}`;
             document.getElementById('total-duration').textContent = `${totalDuration} hour(s)`;
             
             if (selectedServices.length > 0) {
@@ -724,7 +757,7 @@ if ($_POST) {
             
             if (hasServices && hasDate && hasMechanic && hasTime) {
                 submitBtn.disabled = false;
-                submitBtn.textContent = `Book ${selectedServices.length} Service(s) - ${totalCost.toFixed(2)}`;
+                submitBtn.textContent = `Book ${selectedServices.length} Service(s) - BDT${totalCost.toFixed(2)}`;
                 submitBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             } else {
                 submitBtn.disabled = true;

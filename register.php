@@ -5,13 +5,16 @@ $error = '';
 $success = '';
 
 if ($_POST) {
+    $name = trim($_POST['name']);
+    $address = trim($_POST['address']);
+    $phone = trim($_POST['phone']);
     $username = trim($_POST['username']);
     $email = trim($_POST['email']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
-    
-    if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
-        $error = 'Please fill in all fields';
+
+    if (empty($name) || empty($address) || empty($phone) || empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
+    $error = 'Please fill in all fields';
     } elseif ($password !== $confirm_password) {
         $error = 'Passwords do not match';
     } elseif (strlen($password) < 6) {
@@ -26,9 +29,8 @@ if ($_POST) {
         } else {
             // Create new user
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
-            
-            if ($stmt->execute([$username, $email, $hashed_password])) {
+            $stmt = $pdo->prepare("INSERT INTO users (name, address, phone, username, email, password) VALUES (?, ?, ?, ?, ?, ?)");
+            if ($stmt->execute([$name, $address, $phone, $username, $email, $hashed_password])) {
                 $success = 'Registration successful! You can now login.';
             } else {
                 $error = 'Registration failed. Please try again.';
@@ -162,6 +164,21 @@ if ($_POST) {
         <?php endif; ?>
         
         <form method="POST">
+            <div class="form-group">
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" name="name" value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <input type="text" id="address" name="address" value="<?php echo isset($_POST['address']) ? htmlspecialchars($_POST['address']) : ''; ?>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number:</label>
+                <input type="text" id="phone" name="phone" value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>" required>
+            </div>
+
             <div class="form-group">
                 <label for="username">Username:</label>
                 <input type="text" id="username" name="username" value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>" required>

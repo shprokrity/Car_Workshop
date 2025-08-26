@@ -6,18 +6,23 @@ requireAdmin();
 $success = '';
 $error = '';
 
-// Handle form submissions
+// To handle form submissions
 if ($_POST) {
     if (isset($_POST['action'])) {
         switch ($_POST['action']) {
             case 'update_booking':
+                $name = trim($_POST['name']);
+                $address = trim($_POST['address']);
+                $phone = trim($_POST['phone']);
+                $car_license = trim($_POST['car_license']);
+                $car_engine = trim($_POST['car_engine']);
                 $booking_id = $_POST['booking_id'];
                 $new_mechanic_id = $_POST['new_mechanic_id'];
                 $new_date = $_POST['new_date'];
                 $new_time = $_POST['new_time'];
                 $new_status = $_POST['new_status'];
                 
-                // Get original booking details
+                // To get original booking details
                 $stmt = $pdo->prepare("
                     SELECT b.*, u.email, u.username, m.name as mechanic_name, rs.service_name
                     FROM bookings b 
@@ -30,7 +35,7 @@ if ($_POST) {
                 $original_booking = $stmt->fetch();
                 
                 if ($original_booking) {
-                    // Check if mechanic is available if changing mechanic
+                    // Check if mechanic is available
                     if ($new_mechanic_id != $original_booking['mechanic_id']) {
                         $stmt = $pdo->prepare("
                             SELECT COUNT(*) as current_orders 
@@ -49,17 +54,21 @@ if ($_POST) {
                     // Update booking
                     $stmt = $pdo->prepare("
                         UPDATE bookings 
-                        SET mechanic_id = ?, booking_date = ?, booking_time = ?, status = ?, updated_at = NOW()
+                        SET name = ?, address = ?, phone = ?, car_license = ?, car_engine = ?,
+                            mechanic_id = ?, booking_date = ?, booking_time = ?, status = ?, updated_at = NOW()
                         WHERE id = ?
                     ");
-                    
-                    if ($stmt->execute([$new_mechanic_id, $new_date, $new_time, $new_status, $booking_id])) {
-                        // Get new mechanic name
+
+                    if ($stmt->execute([
+                        $name, $address, $phone, $car_license, $car_engine,
+                        $new_mechanic_id, $new_date, $new_time, $new_status, $booking_id
+                    ])) {
+                        //new mechanic name
                         $stmt = $pdo->prepare("SELECT name FROM mechanics WHERE id = ?");
                         $stmt->execute([$new_mechanic_id]);
                         $new_mechanic = $stmt->fetch();
                         
-                        // Send email notification to user
+                        // Send email notification to user :) jodi host korte pari :) 
                         $subject = "Booking Update - Workshop Service";
                         $message = "
                             <h2>Booking Update</h2>
@@ -111,7 +120,7 @@ if ($_POST) {
     }
 }
 
-// Get all bookings with details
+// bookings with details
 $stmt = $pdo->query("
     SELECT b.*, u.username, u.email, m.name as mechanic_name, rs.service_name, rs.price
     FROM bookings b 
@@ -122,7 +131,7 @@ $stmt = $pdo->query("
 ");
 $bookings = $stmt->fetchAll();
 
-// Get all mechanics with their current workload (by date)
+// mechanics with their current workload (by date)
 $stmt = $pdo->query("
     SELECT m.*, 
            COALESCE(COUNT(b.id), 0) as current_orders
@@ -134,7 +143,7 @@ $stmt = $pdo->query("
 ");
 $mechanics = $stmt->fetchAll();
 
-// Get all repair services
+// repair services
 $stmt = $pdo->query("SELECT * FROM repair_services ORDER BY service_name");
 $services = $stmt->fetchAll();
 ?>
@@ -557,6 +566,11 @@ $services = $stmt->fetchAll();
                         <thead>
                             <tr>
                                 <th>ID</th>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Phone</th>
+                                <th>Car License</th>
+                                <th>Car Engine</th>
                                 <th>Customer</th>
                                 <th>Service</th>
                                 <th>Mechanic</th>
@@ -569,13 +583,18 @@ $services = $stmt->fetchAll();
                         <tbody id="bookings-table">
                             <?php foreach ($bookings as $booking): ?>
                                 <tr data-booking-id="<?php echo $booking['id']; ?>">
-                                    <td>#<?php echo $booking['id']; ?></td>
+                                    <td><?php echo htmlspecialchars($booking['id']); ?></td>
+                                    <td><?php echo htmlspecialchars($booking['name']); ?></td>
+                                    <td><?php echo htmlspecialchars($booking['address']); ?></td>
+                                    <td><?php echo htmlspecialchars($booking['phone']); ?></td>
+                                    <td><?php echo htmlspecialchars($booking['car_license']); ?></td>
+                                    <td><?php echo htmlspecialchars($booking['car_engine']); ?></td>
                                     <td><?php echo htmlspecialchars($booking['username']); ?></td>
                                     <td><?php echo htmlspecialchars($booking['service_name']); ?></td>
                                     <td><?php echo htmlspecialchars($booking['mechanic_name']); ?></td>
                                     <td><?php echo date('M j, Y g:i A', strtotime($booking['booking_date'] . ' ' . $booking['booking_time'])); ?></td>
                                     <td><span class="status <?php echo $booking['status']; ?>"><?php echo ucfirst($booking['status']); ?></span></td>
-                                    <td>$<?php echo number_format($booking['price'], 2); ?></td>
+                                    <td>BDT<?php echo number_format($booking['price'], 2); ?></td>
                                     <td>
                                         <form method="POST" class="form-inline">
                                             <input type="hidden" name="action" value="update_booking">
@@ -693,7 +712,7 @@ $services = $stmt->fetchAll();
                                 <tr>
                                     <td><?php echo htmlspecialchars($service['service_name']); ?></td>
                                     <td><?php echo htmlspecialchars($service['description']); ?></td>
-                                    <td>$<?php echo number_format($service['price'], 2); ?></td>
+                                    <td>BDT<?php echo number_format($service['price'], 2); ?></td>
                                     <td><?php echo $service['duration_hours']; ?> hour(s)</td>
                                     <td><span class="status <?php echo $service['status']; ?>"><?php echo ucfirst($service['status']); ?></span></td>
                                     <td>

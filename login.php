@@ -23,7 +23,7 @@ if ($_POST) {
             if ($user['role'] === 'admin') {
                 header('Location: admin_panel.php');
             } else {
-                header('Location: user_panel.php');
+                header('Location: index.php');
             }
             exit;
         } else {

@@ -1,4 +1,4 @@
--- Create database
+-- database create
 CREATE DATABASE workshop_booking;
 USE workshop_booking;
 
@@ -54,20 +54,20 @@ CREATE TABLE bookings (
     FOREIGN KEY (service_id) REFERENCES repair_services(id)
 );
 
--- Insert sample admin user (password: admin123)
+-- sample admin user
 INSERT INTO users (username, email, password, role) VALUES 
 ('admin', 'admin@workshop.com', 'admin123', 'admin');
 
--- Insert sample mechanics
+-- sample mechanics
 INSERT INTO mechanics (name, specialty, email, phone) VALUES 
 ('Tawkir Arifin', 'Engine Specialist', 'tawkirarifin@gmail.com', '01911111111'),
 ('Nafis Rayan', 'Brake Expert', 'nafis@gmail.com', '01911111111'),
 ('Tashin Rahman', 'Transmission Specialist', 'tashin@gmail.com', '01911111111'),
-('Tawsif Islam', 'Electrical Systems', 'tawsif@gmail.com', '01911111111');
+('Tawsif Islam', 'Oil expart', 'tawsif@gmail.com', '01911111111');
 ('Saiyara Iffat', 'Electrical Systems', 'saiyaraiffat@gmail.com', '01911111111');
 ('Amily Khan', 'Electrical Systems', 'amilykhan@gmail.com', '01911111111');
 
--- Insert sample repair services
+-- sample repair services
 INSERT INTO repair_services (service_name, description, price, duration_hours) VALUES 
 ('Oil Change', 'Complete oil and filter change', 45.00, 1),
 ('Brake Repair', 'Brake pad and rotor replacement', 120.00, 2),

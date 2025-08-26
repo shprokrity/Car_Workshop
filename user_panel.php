@@ -9,14 +9,20 @@ $success = '';
 if ($_POST && isset($_POST['action']) && $_POST['action'] === 'cancel_booking') {
     $booking_id = $_POST['booking_id'];
     
-    // Verify booking belongs to user and is cancellable
+    // booking belongs to user and is cancellable
     $stmt = $pdo->prepare("
-        SELECT b.*, m.name as mechanic_name, rs.service_name 
-        FROM bookings b 
-        JOIN mechanics m ON b.mechanic_id = m.id 
-        JOIN repair_services rs ON b.service_id = rs.id 
-        WHERE b.id = ? AND b.user_id = ? AND b.status IN ('pending', 'confirmed')
+        SELECT b.id, b.name, b.address, b.phone, b.car_license, b.car_engine,
+            b.mechanic_id, b.service_id, b.booking_date, b.booking_time,
+            b.total_price, b.notes, b.status,
+            m.name as mechanic_name, rs.service_name, rs.price
+        FROM bookings b
+        JOIN mechanics m ON b.mechanic_id = m.id
+        JOIN repair_services rs ON b.service_id = rs.id
+        WHERE b.user_id = ?
+        ORDER BY b.booking_date DESC, b.booking_time DESC
     ");
+
+
     $stmt->execute([$booking_id, $_SESSION['user_id']]);
     $booking = $stmt->fetch();
     
@@ -501,7 +507,7 @@ $bookings = $stmt->fetchAll();
             </div>
             <div class="card">
                 <div class="card-icon">💰</div>
-                <h3>$<?php echo number_format(array_sum(array_map(function($b) { return $b['status'] === 'completed' ? $b['total_price'] : 0; }, $bookings)), 2); ?></h3>
+                <h3>BDT<?php echo number_format(array_sum(array_map(function($b) { return $b['status'] === 'completed' ? $b['total_price'] : 0; }, $bookings)), 2); ?></h3>
                 <p>Total Spent</p>
             </div>
         </div>
@@ -530,6 +536,27 @@ $bookings = $stmt->fetchAll();
                             </div>
                         </div>
                         
+                        <div class="booking-detail">
+                            <span class="detail-label">Name:</span>
+                            <span class="detail-value"><?php echo htmlspecialchars($booking['name']); ?></span>
+                        </div>
+                        <div class="booking-detail">
+                            <span class="detail-label">Address:</span>
+                            <span class="detail-value"><?php echo htmlspecialchars($booking['address']); ?></span>
+                        </div>
+                        <div class="booking-detail">
+                            <span class="detail-label">Phone:</span>
+                            <span class="detail-value"><?php echo htmlspecialchars($booking['phone']); ?></span>
+                        </div>
+                        <div class="booking-detail">
+                            <span class="detail-label">Car License:</span>
+                            <span class="detail-value"><?php echo htmlspecialchars($booking['car_license']); ?></span>
+                        </div>
+                        <div class="booking-detail">
+                            <span class="detail-label">Car Engine:</span>
+                            <span class="detail-value"><?php echo htmlspecialchars($booking['car_engine']); ?></span>
+                        </div>
+
                         <div class="booking-details">
                             <div class="detail-item">
                                 <span class="detail-label">Service</span>
@@ -545,7 +572,7 @@ $bookings = $stmt->fetchAll();
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Price</span>
-                                <span class="detail-value">$<?php echo number_format($booking['total_price'], 2); ?></span>
+                                <span class="detail-value">BDT<?php echo number_format($booking['total_price'], 2); ?></span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Booked On</span>
